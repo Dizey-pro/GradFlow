@@ -6,7 +6,7 @@
  *   - Allow-listed CDNs/fonts/Firebase SDK scripts: stale-while-revalidate
  *   - Everything else (payment API, Firestore, Auth, EmailJS, /__/auth, non-GET): NOT intercepted
  */
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.1.0';
 const SHELL_CACHE = `gradeflow-shell-${VERSION}`;
 const STATIC_CACHE = `gradeflow-static-${VERSION}`;
 
@@ -35,7 +35,8 @@ const CDN_ALLOW = [
 
 // Hosts/paths that must always go straight to the network.
 const NEVER_CACHE_HOSTS = [
-  'gradeflow-pay.netlify.app',   // API_BASE (payments)
+  'gradeflow-pay.netlify.app',
+  'v1-1.netlify.app',            // API_BASE (payments + file uploads)
   'firestore.googleapis.com',
   'identitytoolkit.googleapis.com',
   'securetoken.googleapis.com',

@@ -534,14 +534,14 @@
                     <section id="admin-panel" class="hidden">
                         <div class="gf-page-head">
                             <div><h2>Students</h2><p>Each student checks their results with your center number and their candidate ID.</p></div>
-                            <button onclick="toggleAddStudentForm()" class="gf-btn gf-btn-primary"><i class="fas fa-plus"></i> Add student</button>
+                            <div class="flex flex-wrap gap-2"><button onclick="resyncStudentLogins()" id="resync-students-btn" class="gf-btn gf-btn-ghost" title="Re-publish every student so their candidate ID works on the sign-in screen"><i class="fas fa-rotate"></i> Re-sync logins</button><button onclick="toggleAddStudentForm()" class="gf-btn gf-btn-primary"><i class="fas fa-plus"></i> Add student</button></div>
                         </div>
                         <div id="add-student-form" class="hidden gf-panel p-5 mb-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div><label class="gf-label" for="new-stu-id">Candidate ID</label><input type="text" id="new-stu-id" class="gf-input" placeholder="e.g. STU-001"></div>
                                 <div><label class="gf-label" for="new-stu-name">Full name</label><input type="text" id="new-stu-name" class="gf-input"></div>
                                 <div><label class="gf-label" for="new-stu-level">Level</label><select id="new-stu-level" onchange="updateStreamOptions('new-stu-level', 'new-stu-class')" class="gf-input"></select></div>
-                                <div><label class="gf-label" for="new-stu-class">Stream</label><select id="new-stu-class" class="gf-input"></select></div>
+                                <div><label class="gf-label" for="new-stu-class">Class</label><select id="new-stu-class" class="gf-input"></select></div>
                             </div>
                             <div class="mt-5 flex justify-end gap-2"><button onclick="toggleAddStudentForm()" class="gf-btn gf-btn-ghost">Cancel</button><button onclick="addStudent()" class="gf-btn gf-btn-primary">Save student</button></div>
                         </div>
@@ -552,16 +552,16 @@
 
                     <!-- ADMIN: CLASSES -->
                     <section id="admin-classes-panel" class="hidden">
-                        <div class="gf-page-head"><div><h2>Classes</h2><p>Add each level and stream your school teaches. Teachers pick from these.</p></div></div>
+                        <div class="gf-page-head"><div><h2>Classes</h2><p>Add each level and class your school teaches. Teachers pick from these.</p></div></div>
                         <div class="gf-panel p-5 mb-6">
                             <div class="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-4 items-end">
                                 <div><label class="gf-label" for="new-class-level">Level</label><select id="new-class-level" class="gf-input"></select></div>
-                                <div><label class="gf-label" for="new-class-stream">Stream</label><input type="text" id="new-class-stream" placeholder="e.g. Sciences" class="gf-input"></div>
+                                <div><label class="gf-label" for="new-class-stream">Class</label><input type="text" id="new-class-stream" placeholder="e.g. A" class="gf-input"></div>
                                 <button onclick="addClass()" class="gf-btn gf-btn-primary">Add class</button>
                             </div>
                         </div>
                         <div class="gf-panel overflow-hidden"><div class="overflow-x-auto">
-                            <table class="gf-table"><thead><tr><th>Level</th><th>Stream</th><th class="text-right">Remove</th></tr></thead><tbody id="admin-classes-body"></tbody></table>
+                            <table class="gf-table"><thead><tr><th>Level</th><th>Class</th><th class="text-right">Remove</th></tr></thead><tbody id="admin-classes-body"></tbody></table>
                         </div></div>
                     </section>
 
@@ -584,6 +584,37 @@
                                         </div>
                                     </div>
                                     <p id="school-logo-status" class="text-xs text-gray-400" role="status" aria-live="polite"></p>
+                                </div>
+                                <div class="border border-white/10 rounded-xl p-4 space-y-4">
+                                    <div><h3 class="font-semibold text-white">Report signatures</h3><p class="text-xs text-gray-500">Draw or upload a signature for the class teacher and the head. Both are printed on every student report and PDF.</p></div>
+                                    <div class="space-y-2">
+                                        <p class="gf-label mb-0">Head</p>
+                                        <input type="text" id="sig-head-name" maxlength="60" class="gf-input text-sm" placeholder="Name under the signature (optional)" oninput="sigNameChanged('head')">
+                                        <div class="flex items-center gap-3">
+                                            <div id="sig-head-preview" class="w-40 h-16 rounded-lg bg-white border border-white/10 grid place-items-center overflow-hidden text-slate-400 text-xs flex-shrink-0">No signature</div>
+                                            <div class="flex flex-col gap-2 min-w-0">
+                                                <button type="button" onclick="openSigPad('head')" class="gf-btn gf-btn-ghost text-xs py-1.5"><i class="fas fa-signature"></i> Draw</button>
+                                                <label class="gf-btn gf-btn-ghost text-xs py-1.5 cursor-pointer"><i class="fas fa-upload"></i> Upload<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="pickSignature('head', this)"></label>
+                                                <button type="button" onclick="clearSignature('head')" class="gf-btn gf-btn-ghost text-xs py-1.5 text-red-300"><i class="fas fa-trash"></i> Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2 pt-3 border-t border-white/10">
+                                        <p class="gf-label mb-0">Class teacher</p>
+                                        <select id="sig-teacher-scope" class="gf-input text-sm" onchange="renderSigPreview('teacher')" aria-label="Which class this class teacher signs for"></select>
+                                        <input type="text" id="sig-teacher-name" maxlength="60" class="gf-input text-sm" placeholder="Name under the signature (optional)" oninput="sigNameChanged('teacher')">
+                                        <div class="flex items-center gap-3">
+                                            <div id="sig-teacher-preview" class="w-40 h-16 rounded-lg bg-white border border-white/10 grid place-items-center overflow-hidden text-slate-400 text-xs flex-shrink-0">No signature</div>
+                                            <div class="flex flex-col gap-2 min-w-0">
+                                                <button type="button" onclick="openSigPad('teacher')" class="gf-btn gf-btn-ghost text-xs py-1.5"><i class="fas fa-signature"></i> Draw</button>
+                                                <label class="gf-btn gf-btn-ghost text-xs py-1.5 cursor-pointer"><i class="fas fa-upload"></i> Upload<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="pickSignature('teacher', this)"></label>
+                                                <button type="button" onclick="clearSignature('teacher')" class="gf-btn gf-btn-ghost text-xs py-1.5 text-red-300"><i class="fas fa-trash"></i> Remove</button>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-gray-500">Pick "All classes" for one signature everywhere, or choose a class to give it its own class teacher.</p>
+                                    </div>
+                                    <button type="button" onclick="saveSignatures()" id="save-signatures-btn" class="gf-btn gf-btn-primary w-full"><i class="fas fa-floppy-disk"></i> Save signatures</button>
+                                    <p id="sig-status" class="text-xs text-gray-400" role="status" aria-live="polite"></p>
                                 </div>
                                 <div><label class="gf-label" for="settings-school-type">School type</label>
                                     <select id="settings-school-type" class="gf-input" onchange="onSchoolTypeChange()"></select>
@@ -624,7 +655,7 @@
                         <div class="gf-panel p-5 mb-6">
                             <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-4 items-end">
                                 <div><label class="gf-label" for="teacher-select-level">Level</label><select id="teacher-select-level" onchange="updateStreamOptions('teacher-select-level', 'teacher-select-class')" class="gf-input"></select></div>
-                                <div><label class="gf-label" for="teacher-select-class">Stream</label><select id="teacher-select-class" class="gf-input"></select></div>
+                                <div><label class="gf-label" for="teacher-select-class">Class</label><select id="teacher-select-class" class="gf-input"></select></div>
                                 <button onclick="loadTeacherClass()" class="gf-btn gf-btn-primary">Open class</button>
                             </div>
                         </div>
@@ -701,8 +732,8 @@
 
                                 <!-- Signatures -->
                                 <section class="grid grid-cols-2 gap-6 pt-4 text-xs text-slate-500">
-                                    <div><div class="h-8 border-b border-slate-300"></div><p class="mt-1">Class teacher</p></div>
-                                    <div><div class="h-8 border-b border-slate-300"></div><p class="mt-1">Head</p></div>
+                                    <div><div id="rep-sig-teacher" class="h-12 border-b border-slate-300 flex items-end justify-center pb-0.5"></div><p class="mt-1" id="rep-sig-teacher-label">Class teacher</p></div>
+                                    <div><div id="rep-sig-head" class="h-12 border-b border-slate-300 flex items-end justify-center pb-0.5"></div><p class="mt-1" id="rep-sig-head-label">Head</p></div>
                                 </section>
                                 <p class="sm:hidden text-[11px] text-slate-400" id="sp-pdf-date-m"></p>
                             </div>
@@ -798,8 +829,8 @@
 
                             <!-- Step C2: teacher / admin / owner -->
                             <form id="login-step-3" class="hidden space-y-4" onsubmit="event.preventDefault(); processLogin();">
-                                <div><label class="gf-label" for="login-username">Email</label><input type="email" autocomplete="username" inputmode="email" id="login-username" class="gf-input"></div>
-                                <div><label class="gf-label" for="login-password">Password</label><input type="password" autocomplete="current-password" id="login-password" class="gf-input"></div>
+                                <div><label class="gf-label" for="login-username">Email</label><input type="email" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" id="login-username" class="gf-input"></div>
+                                <div><label class="gf-label" for="login-password">Password</label><input type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" id="login-password" class="gf-input"></div>
                                 <button type="submit" id="login-submit-btn" class="gf-btn gf-btn-primary w-full py-3">Sign in</button>
                                 <div class="flex justify-between items-center">
                                     <button type="button" onclick="goToLoginStep(1)" id="login-back-btn" class="text-gray-400 hover:text-white py-2 text-sm">Back</button>
@@ -1015,6 +1046,17 @@
     <!-- =========================================================================================
          JAVASCRIPT LOGIC & MULTI-TENANT FIRESTORE DATABASE
          ========================================================================================= -->
+        <div id="sig-pad-modal" class="hidden fixed inset-0 z-[150] bg-black/70 grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Draw signature">
+        <div class="gf-panel p-5 w-full max-w-md space-y-3">
+            <div><h3 class="font-semibold text-white" id="sig-pad-title">Draw signature</h3><p class="text-xs text-gray-400">Sign with your finger or mouse inside the box.</p></div>
+            <canvas id="sig-pad-canvas" width="600" height="220" class="w-full rounded-xl bg-white" style="touch-action:none;aspect-ratio:600/220"></canvas>
+            <div class="flex gap-2">
+                <button type="button" onclick="clearSigPad()" class="gf-btn gf-btn-ghost flex-1">Clear</button>
+                <button type="button" onclick="closeSigPad()" class="gf-btn gf-btn-ghost flex-1">Cancel</button>
+                <button type="button" onclick="useSigPad()" class="gf-btn gf-btn-primary flex-1">Use signature</button>
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // ----------------------------------------------------
@@ -1172,7 +1214,11 @@
                 'auth/operation-not-allowed': 'Email/Password sign-in is not enabled in Firebase Authentication.',
                 'permission-denied': "You don't have permission to do that.",
                 'unavailable': "Can't reach the database. Check your connection.",
-                'gf/center-taken': 'That center number is already registered.'
+                'gf/center-taken': 'That center number is already registered.',
+                'gf/account-exists': 'That email is already registered to a school. Close this and use Sign in instead.',
+                'gf/teacher-email-exists': 'That email already has a GradeFlow login. Type the same password that login uses, ask the teacher to use "Forgot password", or use a different email.',
+                'gf/teacher-other-school': 'That email already belongs to a different school or role, so it cannot be added here.',
+                'auth/user-disabled': 'This account has been disabled. Contact GradeFlow support.'
             };
             return map[code] || (e && e.message) || 'Something went wrong. Please try again.';
         }
@@ -1486,10 +1532,31 @@
         // Opens the right dashboard for a signed-in admin or teacher (also used after paying)
         async function enterStaff(user, role, center, email) {
             const uSnap = await userRef(user.uid).get();
-            const profile = uSnap.exists ? uSnap.data() : null;
-            if (!profile || profile.centerId !== center || profile.role !== role) {
+            let profile = uSnap.exists ? uSnap.data() : null;
+            if (!profile && role === 'admin') {
+                // The login exists but its school link is missing: rebuild it from the school record if this person is its admin.
+                try {
+                    const s0 = await schoolRef(center).get();
+                    if (s0.exists && s0.data().adminUid === user.uid) {
+                        profile = { role: 'admin', centerId: center, email: user.email || email };
+                        await userRef(user.uid).set(profile);
+                    }
+                } catch (e) { profile = null; }
+            }
+            if (!profile) {
                 await auth.signOut();
-                throw new Error(role === 'admin' ? 'This account is not the admin for that center number.' : 'This account is not a teacher at that center number.');
+                throw new Error(role === 'admin'
+                    ? 'This login is not linked to a school. Check the center number, or register your school first.'
+                    : 'Your login is not linked to a school yet. Ask your school admin to remove you from Teacher accounts and add you again.');
+            }
+            if (profile.centerId !== center) {
+                await auth.signOut();
+                throw new Error('This account belongs to a different school. Check the school name and center number.');
+            }
+            if (profile.role !== role) {
+                await auth.signOut();
+                const is = ROLE_LABELS[profile.role] || profile.role;
+                throw new Error(`This is a ${is.toLowerCase()} account. Go back and choose "${is}" instead.`);
             }
             const sSnap = await schoolRef(center).get();
             if (!sSnap.exists) { await auth.signOut(); throw new Error('Center number not found.'); }
@@ -1770,7 +1837,18 @@
                 const existing = await publicRef(cNum).get();
                 if (existing.exists) throw { code: 'gf/center-taken' };
 
-                cred = await auth.createUserWithEmailAndPassword(email, aPass);
+                try {
+                    cred = await auth.createUserWithEmailAndPassword(email, aPass);
+                } catch (e0) {
+                    // An earlier sign-up may have created the login but died before the school was saved.
+                    // If the same email + password still works and no school is linked to it, pick up where it stopped.
+                    if (!(e0 && e0.code === 'auth/email-already-in-use') || email.toLowerCase() === OWNER_EMAIL.toLowerCase()) throw e0;
+                    let old;
+                    try { old = await auth.signInWithEmailAndPassword(email, aPass); } catch (e1) { throw e0; }
+                    const prof = await userRef(old.user.uid).get().catch(() => null);
+                    if (prof && prof.exists) { await auth.signOut().catch(() => {}); throw { code: 'gf/account-exists' }; }
+                    cred = old;
+                }
                 const uid = cred.user.uid;
                 const schoolType = defaultSchoolType(selectedPlan), scales = zimScales();
                 const settings = { centerName: cName, centerNumber: cNum, themeColor: "#2563eb", schoolType, report: currentTermGuess(), gradeScales: scales, gradeScale: scales[SCHOOL_TYPES[schoolType].groups[0]] };
@@ -1795,7 +1873,7 @@
                 // Don't leave a half-created login behind if the school record failed to save
                 if (cred && cred.user) await cred.user.delete().catch(() => {});
                 await auth.signOut().catch(() => {});
-                const step = e.code === 'gf/center-taken' ? 1 : (String(e.code || '').startsWith('auth/') ? 3 : 5);
+                const step = e.code === 'gf/center-taken' ? 1 : ((e.code === 'gf/account-exists' || String(e.code || '').startsWith('auth/')) ? 3 : 5);
                 if (step === 3) { document.getElementById('reg-email-input-group').classList.remove('hidden'); document.getElementById('reg-code-group').classList.add('hidden'); document.getElementById('btn-send-code').innerHTML = 'Send Code via EmailJS'; }
                 showRegError(step, friendlyError(e));
                 return null;
@@ -1961,7 +2039,7 @@
             fillClassLevelSelect();
             const tbody = document.getElementById('admin-classes-body');
             tbody.innerHTML = db.classes.length ? db.classes.map((c, i) => `<tr><td class="text-white">${esc(levelLabel(c.level))}<br><span class="text-xs text-gray-500">${LEVEL_GROUPS[levelGroup(c.level)].label}</span></td><td>${esc(c.stream)}</td><td class="text-right"><button onclick="deleteClass(${i})" class="gf-icon-btn" aria-label="Remove ${esc(c.level)} ${esc(c.stream)}"><i class="fas fa-trash"></i></button></td></tr>`).join('')
-                : `<tr><td colspan="3" class="gf-empty">No classes yet. Add your first level and stream above.</td></tr>`;
+                : `<tr><td colspan="3" class="gf-empty">No classes yet. Add your first level and class above.</td></tr>`;
         }
         async function addClass() {
             const level = document.getElementById('new-class-level').value, stream = document.getElementById('new-class-stream').value.trim();
@@ -1992,7 +2070,7 @@
         }
         function updateStreamOptions(lId, sId) {
             const db = getDatabase(), level = document.getElementById(lId).value, sel = document.getElementById(sId);
-            sel.innerHTML = '<option value="" disabled selected>Select Stream</option>' + db.classes.filter(c => c.level === level).map(c => `<option value="${esc(c.stream)}">${esc(c.stream)}</option>`).join('');
+            sel.innerHTML = '<option value="" disabled selected>Select Class</option>' + db.classes.filter(c => c.level === level).map(c => `<option value="${esc(c.stream)}">${esc(c.stream)}</option>`).join('');
         }
 
         // Settings
@@ -2026,7 +2104,8 @@
         function loadAdminSettingsUI() {
             const db = getDatabase(), st = db.settings, rp = st.report || {}, guess = currentTermGuess();
             document.getElementById('settings-theme-color').value = st.themeColor || DEFAULT_ACCENT;
-            renderSchoolLogoPreview(st.logoUrl || '');
+            renderSchoolLogoPreview(st.logoData || st.logoUrl || '');
+            loadSignaturesUI();
             const typeSel = document.getElementById('settings-school-type');
             typeSel.innerHTML = Object.entries(SCHOOL_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
             typeSel.value = schoolTypeOf(db);
@@ -2065,22 +2144,28 @@
             const btn = document.getElementById('school-logo-upload-btn');
             const status = document.getElementById('school-logo-status');
             const file = input && input.files && input.files[0];
-            if (currentRole !== 'admin' || !currentCenterId || !auth.currentUser) return toast('Sign in as the school admin to upload a logo.', true);
+            if (currentRole !== 'admin' || !currentCenterId || !auth.currentUser) return toast('Only the school admin can upload the logo.', true);
             if (!file) return toast('Choose the school logo image first.', true);
             if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type) || file.size > 2 * 1024 * 1024) return toast('Logo must be a PNG, JPG, WEBP or GIF no larger than 2 MB.', true);
             const restore = setBusy(btn, 'Uploading logo...');
             try {
-                const logoUrl = (await b2Upload(file, 'logo')).url;
                 const db = getDatabase();
-                const settings = Object.assign({}, db.settings || {}, { logoUrl });
+                // A small copy of the logo is stored inside the school record, so it always appears on reports and PDFs
+                // (no dependence on the file host sending CORS headers).
+                const logoData = await imageToDataUrl(file, 256, 256, 60000);
+                let logoUrl = (db.settings || {}).logoUrl || '';
+                let cloudNote = '';
+                try { logoUrl = (await b2Upload(file, 'logo')).url; }
+                catch (e) { cloudNote = ' (cloud copy skipped: ' + friendlyError(e) + ')'; }
+                const settings = Object.assign({}, db.settings || {}, { logoUrl, logoData });
                 const batch = fs.batch();
                 batch.update(schoolRef(currentCenterId), { settings });
-                batch.set(publicRef(currentCenterId), { logoUrl }, { merge: true });
+                batch.set(publicRef(currentCenterId), { logoUrl, logoData }, { merge: true });
                 await batch.commit();
                 db.settings = settings;
-                renderSchoolLogoPreview(logoUrl);
-                updateTranscriptSchoolLogo(logoUrl);
-                if (status) status.textContent = 'School logo uploaded and saved successfully.';
+                renderSchoolLogoPreview(logoData);
+                updateTranscriptSchoolLogo(logoData);
+                if (status) status.textContent = 'School logo saved. It now appears on every report.' + cloudNote;
                 input.value = '';
                 toast('School logo saved.');
             } catch (e) {
@@ -2088,6 +2173,125 @@
                 toast(friendlyError(e), true);
             } finally { restore(); }
         }
+
+        // ----------------------------------------------------
+        // IMAGES: shrink to a small data URL (logo + signatures are stored inside the school record)
+        // ----------------------------------------------------
+        function imageToDataUrl(file, maxW, maxH, maxChars) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    const scale = Math.min(1, maxW / img.width, maxH / img.height);
+                    const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+                    const c = document.createElement('canvas'); c.width = w; c.height = h;
+                    c.getContext('2d').drawImage(img, 0, 0, w, h);
+                    let out = c.toDataURL('image/png');
+                    if (out.length > maxChars) {
+                        const c2 = document.createElement('canvas'); c2.width = w; c2.height = h;
+                        const x2 = c2.getContext('2d'); x2.fillStyle = '#ffffff'; x2.fillRect(0, 0, w, h); x2.drawImage(img, 0, 0, w, h);
+                        out = c2.toDataURL('image/jpeg', 0.82);
+                    }
+                    if (out.length > maxChars * 1.4) return reject(new Error('That image is too detailed. Use a simpler or smaller one.'));
+                    resolve(out);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read that image.')); };
+                img.src = url;
+            });
+        }
+
+        // ----------------------------------------------------
+        // REPORT SIGNATURES (admin sets them; every student report prints them)
+        //   settings.signatures = { head: {img, name}, classTeacher: { '*': {img, name}, 'Form 4|A': {img, name} } }
+        // ----------------------------------------------------
+        let sigDraft = { head: { img: '', name: '' }, teacher: {} };
+        const sigKey = (level, cls) => `${level || ''}|${cls || ''}`;
+        const sigTeacherScope = () => (document.getElementById('sig-teacher-scope') || {}).value || '*';
+        const sigEntry = which => which === 'head' ? sigDraft.head : (sigDraft.teacher[sigTeacherScope()] = sigDraft.teacher[sigTeacherScope()] || { img: '', name: '' });
+
+        function loadSignaturesUI() {
+            const db = getDatabase(); if (!db) return;
+            const saved = (db.settings && db.settings.signatures) || {};
+            sigDraft = { head: Object.assign({ img: '', name: '' }, saved.head || {}), teacher: JSON.parse(JSON.stringify(saved.classTeacher || {})) };
+            const sel = document.getElementById('sig-teacher-scope'); if (!sel) return;
+            sel.innerHTML = '<option value="*">All classes (default)</option>' + db.classes.map(c => `<option value="${esc(sigKey(c.level, c.stream))}">${esc(levelLabel(c.level))} ${esc(c.stream)}</option>`).join('');
+            renderSigPreview('head'); renderSigPreview('teacher');
+            const st = document.getElementById('sig-status'); if (st) st.textContent = '';
+        }
+        function renderSigPreview(which) {
+            const e = sigEntry(which);
+            const box = document.getElementById(`sig-${which}-preview`), name = document.getElementById(`sig-${which}-name`);
+            if (!box) return;
+            box.innerHTML = e.img ? `<img src="${esc(e.img)}" alt="Signature preview" class="max-w-full max-h-full object-contain">` : 'No signature';
+            if (name && document.activeElement !== name) name.value = e.name || '';
+        }
+        function sigNameChanged(which) { sigEntry(which).name = document.getElementById(`sig-${which}-name`).value.trim(); }
+        function clearSignature(which) { const e = sigEntry(which); e.img = ''; renderSigPreview(which); }
+        async function pickSignature(which, input) {
+            const file = input.files && input.files[0]; input.value = '';
+            if (!file) return;
+            if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type) || file.size > 5 * 1024 * 1024) return toast('Choose a PNG, JPG, WEBP or GIF image under 5 MB.', true);
+            try { sigEntry(which).img = await imageToDataUrl(file, 420, 160, 45000); renderSigPreview(which); }
+            catch (e) { toast(e.message || 'Could not use that image.', true); }
+        }
+        async function saveSignatures() {
+            const btn = document.getElementById('save-signatures-btn'), st = document.getElementById('sig-status');
+            if (currentRole !== 'admin' || !currentCenterId) return toast('Only the school admin can change signatures.', true);
+            const keep = e => (e && (e.img || e.name)) ? { img: e.img || '', name: (e.name || '').slice(0, 60) } : null;
+            const signatures = { head: keep(sigDraft.head), classTeacher: {} };
+            Object.entries(sigDraft.teacher).forEach(([k, v]) => { const c = keep(v); if (c) signatures.classTeacher[k] = c; });
+            if (JSON.stringify(signatures).length > 380000) return toast('Too many large signatures. Remove some class signatures and try again.', true);
+            const restore = setBusy(btn, 'Saving...');
+            try {
+                const db = getDatabase();
+                const settings = Object.assign({}, db.settings || {}, { signatures });
+                const batch = fs.batch();
+                batch.update(schoolRef(currentCenterId), { settings });
+                batch.set(publicRef(currentCenterId), { signatures }, { mergeFields: ['signatures'] });
+                await batch.commit();
+                db.settings = settings;
+                if (st) st.textContent = 'Signatures saved. They now print on every student report.';
+                toast('Signatures saved.');
+            } catch (e) { toast(friendlyError(e), true); if (st) st.textContent = 'Could not save: ' + friendlyError(e); }
+            finally { restore(); }
+        }
+
+        // Finger / mouse signature pad
+        let sigPadTarget = null, sigPadBox = null, sigPadReady = false;
+        function initSigPad() {
+            if (sigPadReady) return; sigPadReady = true;
+            const c = document.getElementById('sig-pad-canvas'), ctx = c.getContext('2d');
+            let drawing = false, last = null;
+            const pos = e => { const r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height }; };
+            const grow = p => { const b = sigPadBox; b.x0 = Math.min(b.x0, p.x); b.y0 = Math.min(b.y0, p.y); b.x1 = Math.max(b.x1, p.x); b.y1 = Math.max(b.y1, p.y); };
+            c.addEventListener('pointerdown', e => { e.preventDefault(); drawing = true; last = pos(e); grow(last); try { c.setPointerCapture(e.pointerId); } catch (x) {} ctx.beginPath(); ctx.arc(last.x, last.y, 1.6, 0, 7); ctx.fillStyle = '#0f172a'; ctx.fill(); });
+            c.addEventListener('pointermove', e => { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineWidth = 3.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; grow(p); });
+            const stop = () => { drawing = false; };
+            c.addEventListener('pointerup', stop); c.addEventListener('pointercancel', stop); c.addEventListener('pointerleave', stop);
+        }
+        function openSigPad(which) {
+            sigPadTarget = which; initSigPad(); clearSigPad();
+            document.getElementById('sig-pad-title').textContent = which === 'head' ? 'Head: draw signature' : 'Class teacher: draw signature';
+            document.getElementById('sig-pad-modal').classList.remove('hidden');
+        }
+        function closeSigPad() { document.getElementById('sig-pad-modal').classList.add('hidden'); }
+        function clearSigPad() {
+            const c = document.getElementById('sig-pad-canvas'); c.getContext('2d').clearRect(0, 0, c.width, c.height);
+            sigPadBox = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+        }
+        function useSigPad() {
+            const c = document.getElementById('sig-pad-canvas'), b = sigPadBox;
+            if (!b || b.x1 < b.x0) return toast('Draw your signature in the box first.', true);
+            const pad = 8, x = Math.max(0, b.x0 - pad), y = Math.max(0, b.y0 - pad);
+            const w = Math.min(c.width - x, b.x1 - b.x0 + pad * 2), h = Math.min(c.height - y, b.y1 - b.y0 + pad * 2);
+            const scale = Math.min(1, 420 / w, 160 / h);
+            const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(w * scale)); out.height = Math.max(1, Math.round(h * scale));
+            out.getContext('2d').drawImage(c, x, y, w, h, 0, 0, out.width, out.height);
+            sigEntry(sigPadTarget).img = out.toDataURL('image/png');
+            renderSigPreview(sigPadTarget); closeSigPad();
+        }
+
         // ----------------------------------------------------
         // BACKBLAZE B2 STORAGE (logos + shared resources)
         // The browser never sees the B2 key. It asks the Netlify function for a short-lived upload link, then sends the file there.
@@ -2130,9 +2334,14 @@
             return 'fa-file-lines';
         }
         function renderResources() {
-            const admin = currentRole === 'admin';
-            document.getElementById('resources-admin-form').classList.toggle('hidden', !admin);
-            document.getElementById('resources-sub').textContent = admin ? 'Upload notes, past papers and notices. Teachers and students can open them from here.' : 'Notes, past papers and notices shared by your school.';
+            const admin = currentRole === 'admin', teacher = currentRole === 'teacher';
+            const myUid = auth.currentUser ? auth.currentUser.uid : '';
+            document.getElementById('resources-admin-form').classList.toggle('hidden', !teacher);   // upload form: teachers only
+            document.getElementById('resources-sub').textContent = teacher
+                ? 'Share notes, past papers and notices. Students, other teachers and your admin can open them from here.'
+                : admin ? 'Documents shared by your teachers. You can remove anything that should not be here.'
+                : 'Notes, past papers and notices shared by your school.';
+            const canRemove = r => admin || (teacher && r.by && r.by === myUid);
             const list = currentResources().slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
             const box = document.getElementById('resources-list');
             if (!list.length) { box.innerHTML = '<div class="gf-panel p-6 text-center text-sm text-gray-400">No resources have been shared yet.</div>'; return; }
@@ -2140,35 +2349,42 @@
                 const url = /^https:\/\//.test(r.url || '') ? r.url : '#';
                 return `<div class="gf-panel p-4 flex items-center gap-3">
                     <i class="fas ${resIcon(r.type)} text-xl theme-text flex-shrink-0"></i>
-                    <div class="min-w-0 flex-1"><p class="font-semibold text-white truncate">${esc(r.title)}</p><p class="text-xs text-gray-500 truncate">${esc(r.name || '')} · ${fmtSize(r.size)} · ${new Date(r.ts || Date.now()).toLocaleDateString()}</p></div>
+                    <div class="min-w-0 flex-1"><p class="font-semibold text-white truncate">${esc(r.title)}</p><p class="text-xs text-gray-500 truncate">${esc(r.name || '')} · ${fmtSize(r.size)} · ${new Date(r.ts || Date.now()).toLocaleDateString()}${r.byName ? ' · ' + esc(r.byName) : ''}</p></div>
                     <a href="${esc(url)}" target="_blank" rel="noopener" class="gf-btn gf-btn-ghost text-xs py-1.5"><i class="fas fa-arrow-up-right-from-square"></i><span class="hidden sm:inline">Open</span></a>
-                    ${admin ? `<button type="button" onclick="deleteResource(${jsArg(r.id)})" class="gf-btn gf-btn-ghost text-xs py-1.5 text-red-300" aria-label="Delete ${esc(r.title)}"><i class="fas fa-trash"></i></button>` : ''}
+                    ${canRemove(r) ? `<button type="button" onclick="deleteResource(${jsArg(r.id)})" class="gf-btn gf-btn-ghost text-xs py-1.5 text-red-300" aria-label="Delete ${esc(r.title)}"><i class="fas fa-trash"></i></button>` : ''}
                 </div>`;
             }).join('');
         }
-        async function saveResources(list) {
-            const db = getDatabase();
-            const settings = Object.assign({}, db.settings || {}, { resources: list });
-            const batch = fs.batch();
-            batch.update(schoolRef(currentCenterId), { settings });
-            batch.set(publicRef(currentCenterId), { resources: list }, { merge: true });
+        // Add / remove one document without rewriting the whole list (two teachers can upload at the same time)
+        async function addResourceDoc(item) {
+            const batch = fs.batch(), add = firebase.firestore.FieldValue.arrayUnion(item);
+            batch.update(schoolRef(currentCenterId), { 'settings.resources': add });
+            batch.set(publicRef(currentCenterId), { resources: add }, { merge: true });
             await batch.commit();
-            db.settings = settings;
+            const db = getDatabase(); if (db) db.settings.resources = currentResources().concat(item);
+        }
+        async function removeResourceDoc(item) {
+            const batch = fs.batch(), rm = firebase.firestore.FieldValue.arrayRemove(item);
+            batch.update(schoolRef(currentCenterId), { 'settings.resources': rm });
+            batch.set(publicRef(currentCenterId), { resources: rm }, { merge: true });
+            await batch.commit();
+            const db = getDatabase(); if (db) db.settings.resources = currentResources().filter(r => r.id !== item.id);
         }
         async function uploadResource() {
             const titleEl = document.getElementById('resource-title'), fileEl = document.getElementById('resource-file');
             const btn = document.getElementById('resource-upload-btn');
             const file = fileEl.files && fileEl.files[0];
             const title = titleEl.value.trim();
-            if (currentRole !== 'admin' || !currentCenterId) return toast('Sign in as the school admin to upload.', true);
+            if (currentRole !== 'teacher' || !currentCenterId || !auth.currentUser) return toast('Only teachers can upload documents.', true);
             if (!title) return toast('Give the document a title.', true);
             if (!file) return toast('Choose a file first.', true);
             if (file.size > 25 * 1024 * 1024) return toast('That file is over 25 MB.', true);
             const restore = setBusy(btn, 'Uploading...');
             try {
                 const up = await b2Upload(file, 'resource');
-                const item = { id: 'r' + Date.now().toString(36), title, url: up.url, key: up.key, name: file.name, type: file.type, size: file.size, ts: Date.now() };
-                await saveResources(currentResources().concat(item));
+                const me = (getDatabase().teachers || []).find(x => x.uid === auth.currentUser.uid) || {};
+                const item = { id: 'r' + Date.now().toString(36), title, url: up.url, key: up.key, name: file.name, type: file.type, size: file.size, ts: Date.now(), by: auth.currentUser.uid, byName: me.name || me.email || '' };
+                await addResourceDoc(item);
                 titleEl.value = ''; fileEl.value = '';
                 renderResources();
                 toast('Document shared.');
@@ -2177,9 +2393,11 @@
         }
         async function deleteResource(id) {
             const item = currentResources().find(r => r.id === id);
-            if (!item || !confirm(`Remove "${item.title}"? Students and teachers will lose access.`)) return;
+            const mine = item && item.by && auth.currentUser && item.by === auth.currentUser.uid;
+            if (!item || !(currentRole === 'admin' || (currentRole === 'teacher' && mine))) return toast('You can only remove documents you uploaded.', true);
+            if (!confirm(`Remove "${item.title}"? Students and teachers will lose access.`)) return;
             try {
-                await saveResources(currentResources().filter(r => r.id !== id));
+                await removeResourceDoc(item);
                 renderResources();
                 toast('Removed.');
                 try { const d = await b2Call({ action: 'delete', key: item.key }); await fetch(d.deleteUrl, { method: 'DELETE' }); } catch (e) { /* file stays in storage; the link is gone from the app */ }
@@ -2191,8 +2409,31 @@
             const img = document.getElementById('rep-school-logo');
             const initials = document.getElementById('rep-initials');
             if (!box || !img || !initials) return;
-            if (url) { img.src = url; img.alt = 'School logo'; box.classList.remove('hidden'); initials.classList.add('hidden'); }
-            else { img.removeAttribute('src'); box.classList.add('hidden'); initials.classList.remove('hidden'); }
+            url = safeImg(url);
+            if (!url) { img.removeAttribute('src'); box.classList.add('hidden'); initials.classList.remove('hidden'); return; }
+            img.onerror = () => {
+                // Some file hosts send no CORS headers. Retry without it so the logo still shows on screen.
+                if (img.getAttribute('crossorigin') !== null) { img.removeAttribute('crossorigin'); img.src = url; return; }
+                box.classList.add('hidden'); initials.classList.remove('hidden');
+            };
+            if (/^data:/i.test(url)) img.removeAttribute('crossorigin'); else img.setAttribute('crossorigin', 'anonymous');
+            img.src = url; img.alt = 'School logo';
+            box.classList.remove('hidden'); initials.classList.add('hidden');
+        }
+        // Prints the head's and class teacher's saved signatures on the report
+        function paintReportSignatures(school, student) {
+            const sig = school.signatures || (school.settings || {}).signatures || {};
+            const ct = sig.classTeacher || {};
+            const teacher = ct[sigKey(student.level, student.class_name)] || ct['*'] || null;
+            const paint = (boxId, labelId, entry, label) => {
+                const box = document.getElementById(boxId), lab = document.getElementById(labelId);
+                if (!box || !lab) return;
+                const src = entry ? safeImg(entry.img) : '';
+                box.innerHTML = src ? `<img src="${esc(src)}" alt="${esc(label)} signature" style="max-height:44px;max-width:100%;object-fit:contain">` : '';
+                lab.textContent = entry && entry.name ? `${label}: ${entry.name}` : label;
+            };
+            paint('rep-sig-teacher', 'rep-sig-teacher-label', teacher, 'Class teacher');
+            paint('rep-sig-head', 'rep-sig-head-label', sig.head || null, 'Head');
         }
 
         function addGradeRow() { document.getElementById('grade-scale-container').insertAdjacentHTML('beforeend', gradeRowHtml()); }
@@ -2248,12 +2489,25 @@
             // A second Firebase app instance creates the account without signing the admin out.
             const secondary = firebase.apps.find(a => a.name === 'gf-secondary') || firebase.initializeApp(firebaseConfig, 'gf-secondary');
             const sAuth = secondary.auth();
-            let cred = null;
+            let cred = null, created = false;
             try {
-                cred = await sAuth.createUserWithEmailAndPassword(email, password);
+                try {
+                    cred = await sAuth.createUserWithEmailAndPassword(email, password);
+                    created = true;
+                } catch (e0) {
+                    // The email may belong to a teacher who was removed earlier (the login stays in Firebase). Reuse it if the password matches.
+                    if (!(e0 && e0.code === 'auth/email-already-in-use')) throw e0;
+                    try { cred = await sAuth.signInWithEmailAndPassword(email, password); }
+                    catch (e1) { throw { code: 'gf/teacher-email-exists' }; }
+                    let prof = null;
+                    try { const ps = await userRef(cred.user.uid).get(); prof = ps.exists ? ps.data() : null; }
+                    catch (e2) { throw { code: 'gf/teacher-other-school' }; }
+                    if (prof && (prof.centerId !== currentCenterId || prof.role !== 'teacher')) throw { code: 'gf/teacher-other-school' };
+                }
                 const uid = cred.user.uid;
-                await userRef(uid).set({ role: 'teacher', centerId: currentCenterId, email, name });
                 const db = getDatabase();
+                if (db.teachers.some(x => x.uid === uid)) { toast('That teacher is already on your list.'); return; }
+                await userRef(uid).set({ role: 'teacher', centerId: currentCenterId, email, name });
                 db.teachers = [...db.teachers, { uid, email, name }];
                 db.teacherUids = [...db.teacherUids, uid];
                 await saveDatabase(db, ['teachers', 'teacherUids']);
@@ -2261,7 +2515,7 @@
                 renderTeacherList();
                 toast(`${name} can now sign in as a teacher with center number ${currentCenterId}.`);
             } catch (e) {
-                if (cred && cred.user) await cred.user.delete().catch(() => {});
+                if (created && cred && cred.user) await cred.user.delete().catch(() => {});
                 toast(friendlyError(e), true);
             } finally {
                 await sAuth.signOut().catch(() => {});
@@ -2291,7 +2545,7 @@
         }
         function toggleAddStudentForm() { document.getElementById('add-student-form').classList.toggle('hidden'); }
         async function addStudent() {
-            const id = document.getElementById('new-stu-id').value.trim(), name = document.getElementById('new-stu-name').value.trim(), level = document.getElementById('new-stu-level').value, cls = document.getElementById('new-stu-class').value;
+            const id = cleanCandidateId(document.getElementById('new-stu-id').value), name = document.getElementById('new-stu-name').value.trim(), level = document.getElementById('new-stu-level').value, cls = document.getElementById('new-stu-class').value;
             if (!id || !name || !level) return toast('Fill in the candidate ID, name and level.', true);
             const db = getDatabase();
             if (db.students.some(s => toDocId(s.id) === toDocId(id))) return toast('A student with that candidate ID already exists.', true);
@@ -2305,6 +2559,22 @@
                 document.getElementById('new-stu-id').value = ''; document.getElementById('new-stu-name').value = '';
                 toggleAddStudentForm(); renderAdminTable();
             } catch (e) { toast(friendlyError(e), true); }
+        }
+        // Re-publishes every student's results record so their candidate ID works on the sign-in screen
+        async function resyncStudentLogins() {
+            const db = getDatabase(), btn = document.getElementById('resync-students-btn');
+            if (!db || currentRole !== 'admin') return;
+            if (!db.students.length) return toast('There are no students to sync yet.');
+            const restore = setBusy(btn, 'Syncing...');
+            try {
+                for (let i = 0; i < db.students.length; i += 400) {
+                    const batch = fs.batch();
+                    db.students.slice(i, i + 400).forEach(s => batch.set(resultRef(currentCenterId, s.id), publicResult(s)));
+                    await batch.commit();
+                }
+                toast(`${db.students.length} student login${db.students.length === 1 ? '' : 's'} re-published.`);
+            } catch (e) { toast(friendlyError(e), true); }
+            finally { restore(); }
         }
         async function deleteStudent(i) {
             const db = getDatabase(), stu = db.students[i];
@@ -2398,22 +2668,35 @@
         function logoutStudentPortal() { logoutDashboard(); }
 
         let studentCandId = '';
+        // Candidate IDs as people type them: spaces, en-dashes and missing hyphens should not lock a student out.
+        function cleanCandidateId(v) { return String(v || '').replace(/[\u2010-\u2015\u2212]/g, '-').replace(/\s+/g, '').trim(); }
+        function candidateIdVariants(raw) {
+            const base = toDocId(cleanCandidateId(raw));
+            const out = new Set([toDocId(raw), base]);
+            const m = base.match(/^([A-Z]+)-?(\d+)$/);
+            if (m) { out.add(m[1] + '-' + m[2]); out.add(m[1] + m[2]); }
+            return [...out].filter(Boolean);
+        }
         async function processStudentLogin() {
             if (!signinSchool) return goToLoginStep('school');
             const cNum = signinSchool.center;
-            const candNum = toDocId(document.getElementById('sp-cand-number').value);
+            const rawCand = document.getElementById('sp-cand-number').value;
             const err = document.getElementById('login-error');
             const showErr = m => { err.innerText = m; err.classList.remove('hidden'); };
             err.classList.add('hidden');
-            if (!candNum) return showErr('Enter your candidate ID.');
+            if (!cleanCandidateId(rawCand)) return showErr('Enter your candidate ID.');
             if (!FIREBASE_READY) return showErr('The results service is not configured yet.');
 
             const restore = setBusy(document.getElementById('student-submit-btn'), 'Checking...');
             try {
                 const pSnap = await publicRef(cNum).get();
                 if (!pSnap.exists || !isPaidUp(pSnap.data())) return showErr("Your school's results portal isn't active right now. Please check with your school.");
-                const rSnap = await resultRef(cNum, candNum).get();
-                if (!rSnap.exists) return showErr('That candidate ID is not registered at this school. Check it with your class teacher.');
+                let rSnap = null, candNum = '';
+                for (const id of candidateIdVariants(rawCand)) {
+                    const snap = await resultRef(cNum, id).get();
+                    if (snap.exists) { rSnap = snap; candNum = id; break; }
+                }
+                if (!rSnap) return showErr('That candidate ID is not registered at this school. Check it exactly as your school wrote it, or ask your class teacher.');
 
                 const school = pSnap.data(), student = rSnap.data();
                 schoolCache = null;
@@ -2441,7 +2724,8 @@
 
             $('sp-pdf-center-name').innerText = name;
             $('rep-initials').innerText = name.split(/\s+/).filter(w => /^[A-Za-z]/.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join('') || 'GF';
-            updateTranscriptSchoolLogo((school.settings || {}).logoUrl || '');
+            updateTranscriptSchoolLogo(school.logoData || school.logoUrl || (school.settings || {}).logoData || (school.settings || {}).logoUrl || '');
+            paintReportSignatures(school, student);
             $('rep-term-top').innerText = termText; $('rep-term').innerText = termText || '-';
             $('sp-pdf-date').innerText = dateText; $('sp-pdf-date-m').innerText = dateText;
             $('sp-stu-name').innerText = student.name || '';
@@ -2488,6 +2772,39 @@
             }
             $('rep-key-title').innerText = `Grading key · ${LEVEL_GROUPS[group].label}`;
             $('rep-key').innerHTML = scaleRanges(scale).map(r => { const t = gradeInfo(r.min, scale).tone; return `<span class="text-xs rounded-lg border border-slate-200 px-2 py-1 text-slate-600"><span class="rep-badge rep-${t} mr-1 text-[11px]" style="min-width:1.6rem;padding:.05rem .3rem">${esc(r.symbol)}</span>${r.min}–${r.max}%${r.remark ? ' · ' + esc(r.remark) : ''}</span>`; }).join('');
+        }
+
+        const isNativeApp = () => !!(window.Capacitor && typeof Capacitor.isNativePlatform === 'function' && Capacitor.isNativePlatform());
+
+        // Turns remote images (logo) into embedded ones so the PDF renderer can never be blocked by CORS
+        async function inlineReportImages(root) {
+            const imgs = [...root.querySelectorAll('img')].filter(i => i.getAttribute('src') && !/^data:/i.test(i.getAttribute('src')));
+            await Promise.all(imgs.map(async img => {
+                try {
+                    const res = await fetch(img.getAttribute('src'), { mode: 'cors' });
+                    if (!res.ok) throw new Error('image ' + res.status);
+                    const blob = await res.blob();
+                    img.src = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(blob); });
+                    img.removeAttribute('crossorigin');
+                } catch (e) { /* keep the original; the PDF is still made without that image */ }
+            }));
+            await Promise.all([...root.querySelectorAll('img')].map(i => (i.decode ? i.decode().catch(() => {}) : null)));
+        }
+
+        // Android app: write the PDF to the phone, then open the share sheet (Save to Files/Drive, WhatsApp, Print...)
+        async function saveAndSharePdf(dataUri, filename) {
+            const base64 = String(dataUri).split(',').pop();
+            const plug = name => (Capacitor.Plugins && Capacitor.Plugins[name]) || (Capacitor.registerPlugin ? Capacitor.registerPlugin(name) : null);
+            const Filesystem = plug('Filesystem'), Share = plug('Share');
+            if (!Filesystem) throw new Error('This app build cannot save files. Install the latest GradeFlow APK.');
+            const cached = await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE', recursive: true });
+            let savedTo = '';
+            try { await Filesystem.writeFile({ path: 'GradeFlow/' + filename, data: base64, directory: 'DOCUMENTS', recursive: true }); savedTo = 'Documents/GradeFlow'; } catch (e) { /* not allowed on every Android version */ }
+            if (Share) {
+                try { await Share.share({ title: filename, dialogTitle: 'Save or share your report', files: [cached.uri] }); }
+                catch (e) { if (!/cancel/i.test(String((e && e.message) || e))) throw e; }
+            }
+            toast(savedTo ? `PDF saved in ${savedTo}` : 'PDF ready. Use "Save" in the share menu.');
         }
 
         async function downloadTranscriptPDF() {
@@ -2540,17 +2857,25 @@
                 staging.appendChild(pdfReport);
                 document.body.appendChild(staging);
 
-                await html2pdf().set({
+                await inlineReportImages(pdfReport);
+                const pdfName = `Report-${studentCandId || 'student'}.pdf`;
+                const worker = html2pdf().set({
                     margin: [0.3, 0.3, 0.35, 0.3],
                     filename: `Report-${studentCandId || 'student'}.pdf`,
                     image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: { scale: 2, width: 736, windowWidth: 794, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
                     pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'header', 'footer', '.rep-tile'] },
                     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                }).from(pdfReport).save();
+                }).from(pdfReport);
+                if (isNativeApp()) {
+                    // Android WebView cannot download blob links, so hand the file to the phone instead.
+                    await saveAndSharePdf(await worker.outputPdf('datauristring'), pdfName);
+                } else {
+                    await worker.save();
+                }
             } catch (e) {
                 console.error('Transcript PDF generation failed:', e);
-                toast('Could not create the PDF. Try again.', true);
+                toast('Could not create the PDF: ' + ((e && e.message) || 'please try again.'), true);
             } finally {
                 if (staging && staging.parentNode) staging.parentNode.removeChild(staging);
                 if (typeof restore === 'function') restore();
